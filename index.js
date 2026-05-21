@@ -29,6 +29,14 @@ async function run() {
       const result = await ideasCollection.find().toArray();
       res.json(result)
     });
+    app.get('/my-ideas/:email', async(req,res)=>{
+      const email = req.params.email;
+      const query = {
+         authorEmail:email
+      }
+      const result = await ideasCollection.find(query).toArray();
+      res.json(result)
+    })
     app.post('/ideas', async(req,res)=>{
       const ideasData = req.body;
       const result = await ideasCollection.insertOne(ideasData);
@@ -63,6 +71,40 @@ async function run() {
       const result = await ideasCollection.updateOne(filter, updateDoc);
       res.json(result);
     });
+    app.patch('/ideas/:id', async(req,res)=>{
+
+  const id = req.params.id;
+
+  const updatedData = req.body;
+
+  const filter = {
+    _id: new ObjectId(id)
+  };
+
+  const updateDoc = {
+    $set: updatedData
+  };
+
+  const result = await ideasCollection.updateOne(
+    filter,
+    updateDoc
+  );
+
+  res.json(result);
+});
+
+    app.delete('/ideas/:id', async(req,res)=>{
+
+  const id = req.params.id;
+
+  const query = {
+    _id: new ObjectId(id)
+  };
+
+  const result = await ideasCollection.deleteOne(query);
+
+  res.json(result);
+});
     
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
