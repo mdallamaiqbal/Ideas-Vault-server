@@ -1,7 +1,7 @@
 const express = require("express");
 const dotenv = require('dotenv');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 dotenv.config()
 const uri = process.env.MONGODB_URI;
 
@@ -24,16 +24,46 @@ async function run() {
    
     await client.connect();
     const db = client.db("Ideas-Vault");
-    const myIdeasCollection=db.collection("my-ideas");
-    app.get('/my-ideas', async(req,res)=>{
-      const result = await myIdeasCollection.find().toArray();
+    const ideasCollection=db.collection("ideas");
+    app.get('/ideas', async(req,res)=>{
+      const result = await ideasCollection.find().toArray();
       res.json(result)
-    })
-    app.post('/my-ideas', async(req,res)=>{
-      const myIdeasData = req.body;
-      const result = await myIdeasCollection.insertOne(myIdeasData);
+    });
+    app.post('/ideas', async(req,res)=>{
+      const ideasData = req.body;
+      const result = await ideasCollection.insertOne(ideasData);
       res.json(result);
-    })
+    });
+    app.get('/ideas/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await ideasCollection.findOne(query);
+      res.json(result);
+    });
+    app.post('/ideas/:id/comments', async (req, res) => {
+      const id = req.params.id;
+      const comment = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = { $push: { comments: comment } };
+      const result = await ideasCollection.updateOne(filter, updateDoc);
+      res.json(result);
+    });
+    app.patch('/ideas/:id/comments/:commentId', async (req, res) => {
+      const { id, commentId } = req.params;
+      const { text } = req.body;
+      const filter = { _id: new ObjectId(id), "comments.commentId": commentId };
+      const updateDoc = { $set: { "comments.$.text": text } };
+      const result = await ideasCollection.updateOne(filter, updateDoc);
+      res.json(result);
+    });
+    app.delete('/ideas/:id/comments/:commentId', async (req, res) => {
+      const { id, commentId } = req.params;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = { $pull: { comments: { commentId: commentId } } };
+      const result = await ideasCollection.updateOne(filter, updateDoc);
+      res.json(result);
+    });
+    
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
