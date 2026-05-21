@@ -48,6 +48,15 @@ async function run() {
       const result = await ideasCollection.findOne(query);
       res.json(result);
     });
+  app.get("/comments-on-my-ideas/:email", async (req, res) => {
+    const userEmail = req.params.email;   
+    const result = await ideasCollection.find({
+       authorEmail: userEmail, 
+        comments: { $exists: true, $not: { $size: 0 } }
+    }).toArray();
+
+    res.json(result);
+});
     app.post('/ideas/:id/comments', async (req, res) => {
       const id = req.params.id;
       const comment = req.body;
