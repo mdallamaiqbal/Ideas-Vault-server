@@ -26,7 +26,15 @@ async function run() {
     const db = client.db("Ideas-Vault");
     const ideasCollection=db.collection("ideas");
     app.get('/ideas', async(req,res)=>{
-      const result = await ideasCollection.find().toArray();
+      const {search,category} = req.query;
+      let query ={};
+      if(search){
+        query.ideaTitle ={ $regex: search, $options: "i" };
+      }
+      if (category && category !== "all") {
+    query.category = category;
+  }
+      const result = await ideasCollection.find(query).toArray();
       res.json(result)
     });
     app.get('/my-ideas/:email', async(req,res)=>{
@@ -36,7 +44,11 @@ async function run() {
       }
       const result = await ideasCollection.find(query).toArray();
       res.json(result)
-    })
+    });
+    app.get('/trending-ideas', async (req, res) =>{
+      const result = await ideasCollection.find().limit(6).toArray();
+    res.json(result);
+    });
     app.post('/ideas', async(req,res)=>{
       const ideasData = req.body;
       const result = await ideasCollection.insertOne(ideasData);
@@ -49,7 +61,7 @@ async function run() {
       res.json(result);
     });
   app.get("/comments-on-my-ideas/:email", async (req, res) => {
-    const userEmail = req.params.email;   
+    const userEmail = req.params.email;
     const result = await ideasCollection.find({
        authorEmail: userEmail, 
         comments: { $exists: true, $not: { $size: 0 } }
