@@ -8,7 +8,7 @@ const uri = process.env.MONGODB_URI;
 const app = express();
 
 const PORT = process.env.PORT;
-app.use(cors());
+
 app.use(express.json());
 
 const client = new MongoClient(uri, {
@@ -18,11 +18,16 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+app.use(cors({
+  origin: process.env.CLIENT_URL, 
+  credentials: true
+}));
+app.options('*', cors());
 
 async function run() {
   try {
    
-    await client.connect();
+    // await client.connect();
     const db = client.db("Ideas-Vault");
     const ideasCollection=db.collection("ideas");
     app.get('/ideas', async(req,res)=>{
@@ -127,7 +132,7 @@ async function run() {
   res.json(result);
 });
     
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
       // await client.close();
